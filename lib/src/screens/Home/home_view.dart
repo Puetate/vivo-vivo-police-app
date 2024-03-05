@@ -28,21 +28,26 @@ class _HomeViewState extends State<HomeView> {
   final PageController _pageController = PageController();
   ApiRepositoryNotificationImpl serviceAlert = ApiRepositoryNotificationImpl();
   int _selectedIndex = 0;
-  List<GButton> listButtonsNavBar = const [
+  List<GButton> listButtonsNavBar = [
     GButton(
+      textStyle: Styles.textStyleBody,
       icon: Icons.supervised_user_circle_rounded,
       text: "Civiles",
+      iconSize: 30,
     ),
-    GButton(
-      icon: Icons.business_rounded,
-      text: "Hospitales",
-    ),
+    // GButton(
+    //   icon: Icons.business_rounded,
+    //   text: "Hospitales",
+    // ),
   ];
 
   @override
   void initState() {
     super.initState();
+    homeController = HomeController(context);
+    homeController.openPreferences(context);
     user = context.read<UserProvider>().getUserPrefProvider!.getUser;
+    homeController.initSocket(user);
     initPlatform(context);
   }
 
@@ -85,11 +90,12 @@ class _HomeViewState extends State<HomeView> {
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 20),
-          child: GNav(
+          child: GNav(            
+            mainAxisAlignment: MainAxisAlignment.center,
             gap: 8,
             haptic: true,
-            color: Styles.secondaryColor,
-            activeColor: Styles.secondaryColor,
+            color: Styles.white,
+            activeColor: Styles.white,
             tabBackgroundColor: Styles.containerNavButton,
             selectedIndex: _selectedIndex,
             onTabChange: _onItemTapped,

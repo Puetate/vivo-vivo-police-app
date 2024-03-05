@@ -7,23 +7,18 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:location/location.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:provider/provider.dart';
-import 'package:vibration/vibration.dart';
 import 'package:vivo_vivo_police_app/src/commons/shared_preferences.dart';
 import 'package:vivo_vivo_police_app/src/data/datasource/mongo/api_repository_family_group_impl.dart';
 import 'package:vivo_vivo_police_app/src/data/datasource/mongo/api_repository_notification_impl.dart';
 import 'package:vivo_vivo_police_app/src/data/datasource/mongo/api_repository_user_impl.dart';
 import 'package:vivo_vivo_police_app/src/data/datasource/mongo/api_repository_alarm_impl.dart';
-import 'package:vivo_vivo_police_app/src/domain/models/Request/notification_family_group.dart';
 import 'package:vivo_vivo_police_app/src/domain/models/Request/alarm.dart';
 import 'package:vivo_vivo_police_app/src/domain/models/send_alarm_data.dart';
-import 'package:vivo_vivo_police_app/src/domain/models/user_alert.dart';
 import 'package:vivo_vivo_police_app/src/domain/models/user_auth.dart';
-import 'package:vivo_vivo_police_app/src/providers/alarm_state_provider.dart';
 import 'package:vivo_vivo_police_app/src/providers/geolocation_provider.dart';
 import 'package:vivo_vivo_police_app/src/providers/socket_provider.dart';
 import 'package:vivo_vivo_police_app/src/providers/user_provider.dart';
 import 'package:vivo_vivo_police_app/src/screens/Home/components/permission_dialog.dart';
-import 'package:vivo_vivo_police_app/src/utils/snackbars.dart';
 
 String EVENT = "update-user-status";
 String DANGER = "DANGER";
@@ -32,12 +27,10 @@ String OK = "OK";
 typedef FunctionStart = void Function();
 
 class HomeController {
-  late final Function(List<UserAlert>? userAlerts, int count) onStateGetAlerts;
   late ApiRepositoryNotificationImpl notificationService;
   late ApiRepositoryFamilyGroupImpl familyGroupService;
   late GeoLocationProvider geoLocationProvider;
   late ApiRepositoryAlarmImpl alarmService;
-  late AlarmStateProvider alarmState;
   late ApiRepositoryUserImpl userService;
   late SocketProvider socketProvider;
   late BuildContext context;
@@ -47,7 +40,6 @@ class HomeController {
     geoLocationProvider = context.read<GeoLocationProvider>();
     notificationService = ApiRepositoryNotificationImpl();
     familyGroupService = ApiRepositoryFamilyGroupImpl();
-    alarmState = context.read<AlarmStateProvider>();
     alarmService = ApiRepositoryAlarmImpl();
     userService = ApiRepositoryUserImpl();
     socketProvider = context.read<SocketProvider>();
@@ -118,47 +110,6 @@ class HomeController {
     socketProvider.onAlerts("$EVENT-${user.userID}", (_) {
       startSomething();
     });
-  }
-
-  void getUsersAlerts() async {
-    UserAuth user = context.read<UserProvider>().getUserPrefProvider!.getUser;
-
-    var res = await familyGroupService
-        .getFamilyGroupByUserInDanger(user.userID.toString());
-    if (res == null || res.error) return;
-    int count = res.data["count"];
-    log("$count count!");
-    onStateGetAlerts(null, count);
-  }
-
-  void openStateUser(UserAuth user) async {
-    String state = SharedPrefs().state;
-    if (state == DANGER) {
-      alarmState.setIsProcessSendLocation(true);
-      initSendAlarm(false, true, user);
-    } else {
-      var alarmProvider = context.read<AlarmStateProvider>();
-      alarmProvider.setIsSendLocation(false);
-      alarmProvider.setTextButton("Envío de alerta de Incidente");
-    }
-  }
-
-  void initSendAlarm(bool isNewAlarm, bool hasPermission, UserAuth user) async {
-    bool isSendPosition = await startAlarm(isNewAlarm, hasPermission, user);
-    if (!isSendPosition) {
-      alarmState.setIsProcessSendLocation(false);
-      return;
-    }
-    NotificationFamilyGroup notificationFamilyGroup =
-        NotificationFamilyGroup(userID: user.userID, names: user.names);
-    await notificationService
-        .sendNotificationFamilyGroup(notificationFamilyGroup);
-    alarmState.setIsSendLocation(true);
-    alarmState.setTextButton("Se esta enviando tu ubicación...");
-    Vibration.vibrate(duration: 1000);
-
-    ScaffoldMessenger.of(context).showSnackBar(MySnackBars.successSnackBar(
-        "Tu alarma ha sido enviada con éxito.", "¡Excelentes noticias!"));
   }
 
   Future<bool> startAlarm(
@@ -262,33 +213,6 @@ class HomeController {
     geoLocationProvider.stopListen();
   }
 
-  void cancelSendLocation(int userId) async {
-    geoLocationProvider.stopListen();
-    await geoLocationProvider.getCurrentLocation();
-    // location.enableBackgroundMode(enable: false);
-    AlarmDetail alarmDetail = AlarmDetail(
-      alarmID: SharedPrefs().idAlarm,
-      alarmStatus: OK,
-      latitude: geoLocationProvider.locationData.latitude!,
-      longitude: geoLocationProvider.locationData.longitude!,
-      userID: userId,
-    );
-    var res = await alarmService.postAlarmDetail(alarmDetail);
-    if (res == null || res.error) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('No se pudo cancelar, Intente de nuevo'),
-      ));
-      alarmState.setIsProcessFinalizeLocation(false);
-      return;
-    }
-    SharedPrefs().state = OK;
-    SharedPrefs().removeAlarmInfo();
-    alarmState.setIsProcessSendLocation(false);
-    alarmState.setIsProcessFinalizeLocation(false);
-    alarmState.setIsSendLocation(false);
-    alarmState.setTextButton("Envío de alerta de Incidente");
-    Vibration.vibrate(duration: 100);
-  }
 
   void logOut() async {
     SharedPrefs().logout();

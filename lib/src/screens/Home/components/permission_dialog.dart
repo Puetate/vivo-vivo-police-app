@@ -22,10 +22,16 @@ class PermissionLocation extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text("Uso de su Ubicación"),
+                    Text(
+                      "Uso de su Ubicación",
+                      style: Styles.textStyleTitle,
+                    ),
                     const Image(image: AssetImage("assets/image/location.png")),
-                    const Text(
-                        'Al presionar "SOS" esta aplicación recoge datos de tu ubicación para informar a tu grupo de confianza que estas en peligro y brinde apoyo en donde sea que te encuentres. Incluso cuando la aplicación está cerrada o no este en uso mientras estés en emergencia.'),
+                    Text(
+                        style: Styles.textStyleTitle.copyWith(
+                            fontSize: 17, fontWeight: FontWeight.w500),
+                        textAlign: TextAlign.justify,
+                        'Para observar a las personas en emergencia se requiere del uso de su ubicación en tiempo real.'),
                     Padding(
                       padding: const EdgeInsets.only(top: 10),
                       child: Row(

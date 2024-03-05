@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:vivo_vivo_police_app/src/data/datasource/mongo/api_repository_family_group_impl.dart';
 import 'package:vivo_vivo_police_app/src/domain/models/user_alert.dart';
 import 'package:vivo_vivo_police_app/src/screens/Alerts/components/card_alert.dart';
+import 'package:vivo_vivo_police_app/src/screens/Home/Drawer/components/family_group.dart';
 import 'package:vivo_vivo_police_app/src/screens/Home/controllers/home_controller.dart';
 
 import '../../utils/app_styles.dart';
@@ -22,6 +23,7 @@ class _AlertsState extends State<Alerts> {
   late final HomeController homeController;
 
   late Future<List<UserAlert>> _familyGroupFuture;
+  final String errorMessage = "No se encontró personas en emergencia";
 
   Future<List<UserAlert>> getPoliceGroupByUserID(int userID) async {
     var res = await familyGroupService.getPoliceGroupByUserId(userID);
@@ -59,7 +61,7 @@ class _AlertsState extends State<Alerts> {
         appBar: AppBar(
             leading: Container(),
             centerTitle: true,
-            title: const Text('Alertas Recibidas')),
+            title: const Text('Alertas de Emergencia')),
         body: SafeArea(
             bottom: false,
             child: FutureBuilder(
@@ -77,15 +79,15 @@ class _AlertsState extends State<Alerts> {
                               );
                             },
                           )
-                        : const Center(
+                        : Center(
                             child: Padding(
-                              padding: EdgeInsets.symmetric(vertical: 15),
-                              child: Text(
-                                "No se encontró civil en emergencia",
-                                style: TextStyle(color: Colors.white),
-                              ),
-                            ),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 15),
+                                child: MessageIsEmptyCoreTrust(
+                                    errorMessage: errorMessage)),
                           );
+                  } else if (snapshot.hasError) {
+                    return MessageIsEmptyCoreTrust(errorMessage: errorMessage);
                   } else {
                     return Center(
                       child: CircularProgressIndicator(
