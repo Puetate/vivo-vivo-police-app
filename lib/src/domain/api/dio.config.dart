@@ -1,0 +1,54 @@
+import 'dart:io';
+import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:vivo_vivo_police_app/src/commons/shared_preferences.dart';
+import 'package:vivo_vivo_police_app/src/global/global_variable.dart';
+import 'package:vivo_vivo_police_app/src/utils/snackbars.dart';
+
+class DioSingleton {
+  static Dio? _instance;
+
+  DioSingleton._internal() {
+    // Configuración de Dio y sus interceptores
+    final dio = Dio(
+      BaseOptions(
+          baseUrl: dotenv.env['BASE_URL']!,
+          headers: {
+            HttpHeaders.contentTypeHeader: "application/json; charset=utf-8",
+          },
+          receiveTimeout: const Duration(seconds: 60),
+          connectTimeout: const Duration(seconds: 60)),
+    );
+
+    dio.interceptors.add(InterceptorsWrapper(
+      onRequest: (options, handler) {
+        final token = SharedPrefs().token;
+        options.headers['Authorization'] = 'Bearer $token';
+        handler.next(options);
+      },
+      onResponse: (response, handler) {
+        handler.next(response);
+      },
+      onError: (DioException error, handler) {
+        const String notConnectMessage = 'Compruebe su Conexión a Internet';
+        final String message =
+            error.response?.data['error'] ?? notConnectMessage;
+
+        ScaffoldMessenger.of(GlobalVariable.navigatorState.currentContext!)
+            .showSnackBar(MySnackBars.failureSnackBar(message,
+                "Error!")); // Implementa tu propia lógica para mostrar mensajes de error
+        handler.next(error);
+      },
+    ));
+
+    _instance = dio;
+  }
+
+  static Dio getInstance() {
+    if (_instance == null) {
+      DioSingleton._internal(); // Crear una instancia si es nula
+    }
+    return _instance!;
+  }
+}
