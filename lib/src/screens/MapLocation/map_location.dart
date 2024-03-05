@@ -111,7 +111,10 @@ class _LocationMapState extends State<LocationMap> {
                   },
                   markers: Set<Marker>.of(_markers.values),
                 )
-              : const Center(child: CircularProgressIndicator()),
+              : Center(
+                  child: CircularProgressIndicator(
+                  color: Styles.primaryColor,
+                )),
           /*         Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
