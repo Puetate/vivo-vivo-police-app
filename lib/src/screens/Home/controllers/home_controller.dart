@@ -21,10 +21,11 @@ import 'package:vivo_vivo_police_app/src/providers/user_provider.dart';
 import 'package:vivo_vivo_police_app/src/screens/Home/components/permission_dialog.dart';
 
 String EVENT = "update-user-status";
+String EVENT_REQUEST_POSITION = "request-police-position";
+String EVENT_STORE_POSITION = "store-police-position";
 String DANGER = "DANGER";
 String MOBILE = "MOBILE";
 String OK = "OK";
-typedef FunctionStart = void Function();
 
 class HomeController {
   late ApiRepositoryNotificationImpl notificationService;
@@ -105,10 +106,22 @@ class HomeController {
   }
 
   void onAlerts(Function startSomething) {
-    UserAuth user = context.read<UserProvider>().getUserPrefProvider!.getUser;
-
-    socketProvider.onAlerts("$EVENT-${user.userID}", (_) {
+    socketProvider.onAlerts(EVENT, (_) {
       startSomething();
+    });
+  }
+
+  void onRequestPolicePosition(int userID) {
+    socketProvider.onRequestPolicePosition(EVENT_REQUEST_POSITION, (_) async {
+      await geoLocationProvider.getCurrentLocation();
+      double lng = geoLocationProvider.getCurrentPosition!.longitude!;
+      double lat = geoLocationProvider.getCurrentPosition!.latitude!;
+      SendAlarmData dataSocketPosition = SendAlarmData(
+        position: Position(lat: lat, lng: lng),
+        userID: userID,
+      );
+      socketProvider.emitStorePolicePosition(
+          EVENT_STORE_POSITION, dataSocketPosition);
     });
   }
 
@@ -212,7 +225,6 @@ class HomeController {
   void cancelViewLocation() {
     geoLocationProvider.stopListen();
   }
-
 
   void logOut() async {
     SharedPrefs().logout();

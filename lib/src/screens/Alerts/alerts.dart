@@ -48,6 +48,7 @@ class _AlertsState extends State<Alerts> {
   void initState() {
     super.initState();
     homeController = HomeController(context);
+    homeController.onRequestPolicePosition(widget.userID);
     homeController.onAlerts(() {
       reloadData();
     });

@@ -10,12 +10,12 @@ String sendAlarmDataToJson(SendAlarmData data) => json.encode(data.toJson());
 
 class SendAlarmData {
     Position position;
-    List<int> familyMemberUserIDs;
+    List<int>? familyMemberUserIDs;
     int userID;
 
     SendAlarmData({
         required this.position,
-        required this.familyMemberUserIDs,
+       this.familyMemberUserIDs,
         required this.userID,
     });
 
@@ -27,7 +27,12 @@ class SendAlarmData {
 
     Map<String, dynamic> toJson() => {
         "position": position.toJson(),
-        "familyMemberUserIDs": List<dynamic>.from(familyMemberUserIDs.map((x) => x)),
+        "familyMemberUserIDs": List<dynamic>.from(familyMemberUserIDs!.map((x) => x)),
+        "userID": userID,
+    };
+
+    Map<String, dynamic> toStorePolicePositionJson() => {
+        "position": position.toJson(),
         "userID": userID,
     };
 }

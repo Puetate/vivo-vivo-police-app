@@ -55,4 +55,13 @@ class SocketProvider with ChangeNotifier {
   void onAlerts(String event, dynamic Function(dynamic) callback) {
     _socket!.on(event, callback);
   }
+
+  void onRequestPolicePosition(
+      String event, dynamic Function(dynamic) callback) {
+    _socket!.on(event, callback);
+  }
+
+  void emitStorePolicePosition(String event, SendAlarmData data) {
+    _socket!.emit(event, data.toStorePolicePositionJson());
+  }
 }
